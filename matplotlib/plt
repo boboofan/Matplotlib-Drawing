@@ -1,0 +1,236 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
+from matplotlib.pylab import mpl
+
+class Vacation:
+    def __init__(self,start_day,end_day,name):
+        self.name=name
+        self.days=[day for day in range(start_day,end_day+1)]
+
+class Vacations:
+    def __init__(self):
+        self.January=[Vacation(27,31,'春节')]
+        self.February=[Vacation(1,2,'春节')]
+        self.March=[]
+        self.April=[Vacation(2,4,'清明节'),Vacation(29,30,'劳动节')]
+        self.May=[Vacation(1,1,'劳动节'),Vacation(28,30,'端午节')]
+        self.June=[]
+        self.July=[]
+        self.August=[]
+        self.September=[]
+        self.October=[Vacation(1,8,'国庆节/中秋节')]
+        self.November=[]
+        self.December=[Vacation(30,31,'元旦')]
+        self.list=[self.January,self.February,self.March,self.April,self.May,self.June,self.July,
+                   self.August,self.September,self.October,self.November,self.December]
+
+class Festival:
+    def __init__(self,data,name):
+        self.data=data
+        self.name=name
+
+class Festivals:
+    def __init__(self,data_list):
+        self.Spring_Festival=Festival(pd.concat([data_list[0].loc['1月27号':'1月31号',:], data_list[1].loc['2月1号':'2月2号',:]], axis=0),'春节')
+        self.Ching_Ming_Festival=Festival(data_list[3].loc['4月2号':'4月4号',:],'清明节')
+        self.Labor_day=Festival(pd.concat([data_list[3].loc['4月29号':'4月30号',:], data_list[4].loc['5月1号',:]], axis=0),'劳动节')
+        self.Dragon_Boat_Festival=Festival(data_list[4].loc['5月28号':'5月30号',:],'端午节')
+        self.National_Day=Festival(data_list[9].loc['10月1号':'10月8号',:],'国庆和中秋节')
+        self.New_Years_Day=Festival(data_list[11].loc['12月30号':'12月31号',:],'元旦')
+        self.list=[self.Spring_Festival,self.Ching_Ming_Festival,self.Labor_day,
+                   self.Dragon_Boat_Festival,self.National_Day,self.New_Years_Day]
+
+def get_data(sheet):
+    columns = list(sheet.iloc[0, :])
+    columns = [c.replace('\n', '').replace(' ', '').replace('(人)', '') for c in columns]
+    columns.remove('日期')
+    data = pd.DataFrame(np.array(sheet.iloc[1:, 1:]), columns=columns)
+    return data
+
+def get_days_list(month):
+    list_month_30 = [4, 6, 9, 11]
+    list_month_31 = [3, 5, 7, 8, 10, 12]
+
+    if month==1:
+        days = [i for i in range(13, 32)]
+    elif month==2:
+        days = [i for i in range(1, 29)]
+    elif month in list_month_30:
+        days = [i for i in range(1, 31)]
+    elif month in list_month_31:
+        days = [i for i in range(1, 32)]
+
+    return days
+
+def get_monthly_data():
+    monthly_data_list = []
+
+    for i in range(14, 26):
+        sheet = pd.read_excel('合肥高铁南站客流统计表.xlsx', sheet_name=i)
+        data = get_data(sheet)
+        month = i - 13
+        days_list = get_days_list(month)
+        data.index = days_list
+        monthly_data_list.append(data)
+
+    return monthly_data_list
+
+def draw_railway(data_list,vacations):    #折线图
+    for i in range(len(data_list)):
+        month = i + 1
+        data = data_list[i]
+        vacations_list = vacations.list[i]
+        loc_list=[1,1,1,9,9,4,4,4,4,3,4,4]
+
+        myfont = FontProperties(fname="C:/Windows/Fonts/msyh.ttc")
+        mpl.rcParams['axes.unicode_minus'] = False
+
+
+        plt.plot(data.index, data.iloc[:, 0], '.-',label=data.columns[0],color='darkkhaki')
+        plt.plot(data.index, data.iloc[:, 1], '.-',label=data.columns[1],color='forestgreen')
+        plt.plot(data.index, data.iloc[:, 2], '.-',label=data.columns[2],color='teal')
+
+        plt.legend(loc=loc_list[i], prop=myfont,framealpha=0.6)
+
+        c = iter(['r', 'chocolate'])
+        for vacation in vacations_list:
+            days = vacation.days
+            color = next(c)
+
+            plt.plot(days, data.loc[days, :].iloc[:, 0], '.-', color=color, label=vacation.name + '假期')
+            plt.legend(loc=loc_list[i], prop=myfont, framealpha=0.6)
+
+        c = iter(['r', 'chocolate'])
+        for vacation in vacations_list:
+            days = vacation.days
+            color=next(c)
+
+            plt.plot(days, data.loc[days, :].iloc[:, 1], '.-',color=color)
+            plt.plot(days, data.loc[days, :].iloc[:, 2], '.-',color=color)
+
+        plt.xticks([i for i in range(data.index[0], data.index[-1], 2)])
+        plt.yticks([i for i in range(0, 200000, 20000)])
+
+        plt.xlabel('日期(号)', fontproperties=myfont)
+        plt.ylabel('流量(人)', fontproperties=myfont)
+
+        plt.title('2017年%d月合肥南站铁路流量' % month, fontproperties=myfont)
+
+        plt.tight_layout()
+
+        plt.savefig('D:/360data/重要数据/桌面/合肥南站/合肥南站铁路流量/%d月.png' % month,dpi=600)
+        plt.show()
+
+def draw_city(data_list,vacations):   #折线图
+    for i in range(len(data_list)):
+        month = i + 1
+        data = data_list[i]
+        vacations_list = vacations.list[i]
+        loc_list=[1,1,1,2,9,2,1,1,1,1,1,1]
+
+        myfont = FontProperties(fname="C:/Windows/Fonts/msyh.ttc")
+        mpl.rcParams['axes.unicode_minus'] = False
+
+
+        plt.plot(data.index, data.iloc[:, 5], '.-',label='地铁',color='dodgerblue')
+        plt.plot(data.index, data.iloc[:, 6], '.-',label='客运',color='gold')
+        plt.plot(data.index, data.iloc[:, 7], '.-',label='公交',color='yellowgreen')
+
+        plt.legend(loc=loc_list[i], prop=myfont,framealpha=0.6)
+
+        c = iter(['r', 'chocolate'])
+        for vacation in vacations_list:
+            days = vacation.days
+            color = next(c)
+
+            plt.plot(days, data.loc[days, :].iloc[:, 5], '.-', color=color, label=vacation.name + '假期')
+            plt.legend(loc=loc_list[i], prop=myfont, framealpha=0.6)
+
+        c = iter(['r', 'chocolate'])
+        for vacation in vacations_list:
+            days = vacation.days
+            color=next(c)
+
+            plt.plot(days, data.loc[days, :].iloc[:, 6], '.-',color=color)
+            plt.plot(days, data.loc[days, :].iloc[:, 7], '.-',color=color)
+
+        plt.xticks([i for i in range(data.index[0], data.index[-1], 2)])
+        plt.yticks([i for i in range(0, 180000, 20000)])
+
+        plt.xlabel('日期(号)', fontproperties=myfont)
+        plt.ylabel('流量(人)', fontproperties=myfont)
+
+        plt.title('2017年%d月合肥南站城市交通流量' % month, fontproperties=myfont)
+
+        plt.tight_layout()
+
+        plt.savefig('D:/360data/重要数据/桌面/合肥南站/合肥南站城市交通流量/%d月.png' % month,dpi=600)
+        plt.show()
+
+def draw_festival(data_list):   #饼图和柱状图
+    for i in range(len(data_list)):
+        data=data_list[i]
+        data.index=data.index.map(lambda x:str(i+1)+'月'+str(x)+'号')
+
+    festival_list=Festivals(data_list)
+
+    myfont = FontProperties(fname="C:/Windows/Fonts/msyh.ttc")
+    mpl.rcParams['axes.unicode_minus'] = False
+
+    for festival in festival_list.list:
+        values=[festival.data.iloc[:,i].sum() for i in [5,6,7]]
+        labels=['地铁','客运','公交']
+        explode=[0.1,0,0]
+        colors=['mediumslateblue','yellow','springgreen']
+
+        patches,l_text,p_text=plt.pie(values,labels=labels,explode=explode,colors=colors,shadow=True,autopct='%3.1f%%')
+        for t in l_text:
+            t.set_fontproperties(myfont)
+
+        plt.title('2017年'+festival.name+'假期城市交通流量比例',fontproperties=myfont)
+
+        plt.savefig('D:/360data/重要数据/桌面/合肥南站/合肥南站节日城市交通流量比例/'+festival.name +'.png', dpi=600)
+        plt.show()
+
+
+
+    x=[festival.name for festival in festival_list.list]
+    y1=[festival.data.iloc[:,0].sum() for festival in festival_list.list]
+    y2=[festival.data.iloc[:,1].sum() for festival in festival_list.list]
+
+    mpl.rcParams['font.sans-serif'] = ['SimHei']
+    mpl.rcParams['font.serif'] = ['SimHei']
+
+    plt.bar(x,y1,color='cadetblue',label='铁路到达')
+    plt.bar(x,y2,bottom=y1,color='gold',label='铁路出发')
+
+    plt.ylabel('流量(人)', fontproperties=myfont)
+
+    plt.title('2017年假期合肥南站铁路流量',fontproperties=myfont)
+
+    plt.legend(loc=2, prop=myfont, framealpha=0.6)
+
+    plt.tight_layout()
+
+    plt.savefig('D:/360data/重要数据/桌面/合肥南站/2017年假期合肥南站铁路流量.png', dpi=600)
+
+    plt.show()
+
+
+def draw_monthly_data(data_list):
+    vacations=Vacations()
+    draw_railway(data_list,vacations)
+    draw_city(data_list,vacations)
+    draw_festival(data_list)
+
+
+def main():
+    data_list=get_monthly_data()
+    draw_monthly_data(data_list)
+
+
+
+if __name__=='__main__':
+    main()
