@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 from matplotlib.pylab import mpl
+from scipy.interpolate import interp1d,interpolate
 
 class Vacation:
     def __init__(self,start_day,end_day,name):
@@ -77,7 +78,7 @@ def get_monthly_data():
 
     return monthly_data_list
 
-def draw_railway(data_list,vacations):    #折线图
+def draw_railway(data_list,vacations):
     for i in range(len(data_list)):
         month = i + 1
         data = data_list[i]
@@ -123,7 +124,7 @@ def draw_railway(data_list,vacations):    #折线图
         plt.savefig('D:/360data/重要数据/桌面/合肥南站/合肥南站铁路流量/%d月.png' % month,dpi=600)
         plt.show()
 
-def draw_city(data_list,vacations):   #折线图
+def draw_city(data_list,vacations):
     for i in range(len(data_list)):
         month = i + 1
         data = data_list[i]
@@ -169,7 +170,7 @@ def draw_city(data_list,vacations):   #折线图
         plt.savefig('D:/360data/重要数据/桌面/合肥南站/合肥南站城市交通流量/%d月.png' % month,dpi=600)
         plt.show()
 
-def draw_festival(data_list):   #饼图和柱状图
+def draw_festival(data_list):
     for i in range(len(data_list)):
         data=data_list[i]
         data.index=data.index.map(lambda x:str(i+1)+'月'+str(x)+'号')
@@ -195,10 +196,9 @@ def draw_festival(data_list):   #饼图和柱状图
         plt.show()
 
 
-
     x=[festival.name for festival in festival_list.list]
-    y1=[festival.data.iloc[:,0].sum() for festival in festival_list.list]
-    y2=[festival.data.iloc[:,1].sum() for festival in festival_list.list]
+    y1=[festival.data.iloc[:,0].sum()/len(festival.data.index) for festival in festival_list.list]
+    y2=[festival.data.iloc[:,1].sum()/len(festival.data.index) for festival in festival_list.list]
 
     mpl.rcParams['font.sans-serif'] = ['SimHei']
     mpl.rcParams['font.serif'] = ['SimHei']
@@ -206,17 +206,44 @@ def draw_festival(data_list):   #饼图和柱状图
     plt.bar(x,y1,color='cadetblue',label='铁路到达')
     plt.bar(x,y2,bottom=y1,color='gold',label='铁路出发')
 
-    plt.ylabel('流量(人)', fontproperties=myfont)
+    plt.ylabel('日均流量(人/日)', fontproperties=myfont)
 
-    plt.title('2017年假期合肥南站铁路流量',fontproperties=myfont)
+    plt.title('2017年假期合肥南站铁路日均流量',fontproperties=myfont)
 
     plt.legend(loc=2, prop=myfont, framealpha=0.6)
 
     plt.tight_layout()
 
-    plt.savefig('D:/360data/重要数据/桌面/合肥南站/2017年假期合肥南站铁路流量.png', dpi=600)
+    plt.savefig('D:/360data/重要数据/桌面/合肥南站/2017年假期合肥南站铁路日均流量.png', dpi=600)
 
     plt.show()
+
+def drawing_all_data(data_list):
+    for i in range(len(data_list)):
+        data=data_list[i]
+        data.index=data.index.map(lambda x:str(i+1)+'月'+str(x)+'号')
+    all_data=pd.concat(data_list,axis=0,ignore_index=True)
+
+    myfont = FontProperties(fname="C:/Windows/Fonts/msyh.ttc")
+    mpl.rcParams['axes.unicode_minus'] = False
+
+    x=np.arange(13,13+len(all_data.index),1)
+    y=all_data.iloc[:,7]
+
+    plt.plot(x,y,color='burlywood')
+
+    plt.xlabel('天数(天)',fontproperties=myfont)
+    plt.ylabel('流量(人)',fontproperties=myfont)
+
+    plt.xticks(np.arange(13,366,50))
+
+    plt.title('2017年公交流量图',fontproperties=myfont)
+
+    plt.tight_layout()
+
+    plt.savefig('D:/360data/重要数据/桌面/合肥南站/合肥南站全年流量/公交.png',dpi=600)
+    plt.show()
+
 
 
 def draw_monthly_data(data_list):
@@ -224,6 +251,7 @@ def draw_monthly_data(data_list):
     draw_railway(data_list,vacations)
     draw_city(data_list,vacations)
     draw_festival(data_list)
+    drawing_all_data(data_list)
 
 
 def main():
